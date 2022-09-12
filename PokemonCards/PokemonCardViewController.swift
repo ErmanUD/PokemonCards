@@ -10,34 +10,85 @@ import UIKit
 class PokemonCardViewController: UIViewController {
     
     private var cardTrigger = true
-    
     private var currentPokemon: Pokemon?
-    private var pokemonNumber = 1
     
-    private var cardView: UIView!
-    private var pokemonImageView: UIImageView!
-    private var pokemonNameLabel: UILabel!
-    private var pokemonStackView: UIStackView!
-
-    private var pokemonCardButton: UIButton!
+    private var cardView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 25
+        view.backgroundColor = .white
+        
+        return view
+    }()
+    private var pokemonImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = UIImage(named: "PokemonLogo")
+        
+        return imageView
+    }()
+    private var pokemonNameLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textAlignment = .center
+        
+        return label
+    }()
+    private var pokemonStackView: UIStackView = {
+        let stack = UIStackView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .horizontal
+        stack.distribution = .equalCentering
+        stack.alignment = .center
+        
+        return stack
+    }()
+    private var pokemonCardButton: UIButton = {
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.layer.cornerRadius = 25
+        button.setTitleColor(.black, for: .normal)
+        
+        return button
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemGray2
 
-        fetchPokemon(of: pokemonNumber)
         loadCard()
+        fetchPokemon()
+    }
+        
+    // MARK: - Get Pokemon
+    
+    private func fetchPokemon() {
+
+        APICaller.shared.getPokemon { decodedPokemon in
+            switch decodedPokemon {
+            case .success(let model):
+                self.currentPokemon = model
+            case .failure(_):
+                break
+            }
+        }
     }
     
-    // MARK: - CARD Manipulation
+    private func loadImage(from urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        guard let data = try? Data(contentsOf: url) else { return }
+
+        self.pokemonImageView.image = UIImage(data: data)
+    }
+    
+    // MARK: - PokemonCard and UI
     
     @objc private func pokemonCardTapped() {
-        rotateCard()
-        pokemonNumber += 1
-        
+       
+        fetchPokemon()
         updateCardInfo()
-        
-        fetchPokemon(of: pokemonNumber)
+        rotateCard()
     }
     
     private func updateCardInfo() {
@@ -61,7 +112,6 @@ class PokemonCardViewController: UIViewController {
         pokemonStackView.addArrangedSubview(makeStatView(key: "HP", value: hp))
         pokemonStackView.addArrangedSubview(makeStatView(key: "Attack", value: attack))
         pokemonStackView.addArrangedSubview(makeStatView(key: "Defense", value: defense))
-
     }
     
     private func makeStatView(key: String, value: Int) -> UIView {
@@ -70,7 +120,6 @@ class PokemonCardViewController: UIViewController {
 
         let statLabel = UILabel()
         statLabel.text = String(value)
-        
 
         let vStackView = UIStackView(arrangedSubviews: [titleLabel, statLabel])
         vStackView.axis = .vertical
@@ -79,46 +128,7 @@ class PokemonCardViewController: UIViewController {
         return vStackView
     }
     
-    private func loadImage(from urlString: String){
-        guard let url = URL(string: urlString) else { return }
-        guard let data = try? Data(contentsOf: url) else { return }
-        
-        pokemonImageView.image = UIImage(data: data)
-    }
-    
-    // MARK: - API - Fetch
-    
-    private func fetchPokemon(of pokemonNumber: Int) {
-        var urlString = "https://pokeapi.co/api/v2/pokemon/"
-        urlString += "\(String(pokemonNumber))"
-        performRequest(from: urlString)
-    }
 
-    private func performRequest(from urlString: String) {
-        if let url = URL(string: urlString) {
-            let session = URLSession(configuration: .default)
-
-            let task = session.dataTask(with: url, completionHandler: handle)
-            task.resume()
-        }
-    }
-    
-    private func handle(data: Data?, response: URLResponse?, error: Error?) {
-        if let safeData = data {
-            parseJSON(pokemonData: safeData)
-        }
-    }
-    
-    private func parseJSON(pokemonData: Data) {
-        do {
-            let decodedData = try JSONDecoder().decode(Pokemon.self, from: pokemonData)
-            currentPokemon = decodedData
-        } catch {
-        }
-    }
-    
-    // MARK: - CARD - UI
-    
     private func rotateCard() {
         if cardTrigger {
             UIView.transition(with: cardView,
@@ -135,36 +145,11 @@ class PokemonCardViewController: UIViewController {
     }
     
     private func loadCard() {
-        
-        cardView = UIView()
-        cardView.translatesAutoresizingMaskIntoConstraints = false
-        cardView.layer.cornerRadius = 25
-        cardView.backgroundColor = .white
         view.addSubview(cardView)
-        
-        pokemonCardButton = UIButton()
-        pokemonCardButton.translatesAutoresizingMaskIntoConstraints = false
-        pokemonCardButton.layer.cornerRadius = 25
-        pokemonCardButton.setTitleColor(.black, for: .normal)
-        view.addSubview(pokemonCardButton)
-        
-        pokemonImageView = UIImageView()
-        pokemonImageView.translatesAutoresizingMaskIntoConstraints = false
-        pokemonImageView.contentMode = .scaleAspectFit
-        pokemonImageView.image = UIImage(named: "PokemonLogo")
         cardView.addSubview(pokemonImageView)
-        
-        pokemonNameLabel = UILabel()
-        pokemonNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        pokemonNameLabel.textAlignment = .center
         cardView.addSubview(pokemonNameLabel)
-        
-        pokemonStackView = UIStackView()
-        pokemonStackView.translatesAutoresizingMaskIntoConstraints = false
-        pokemonStackView.axis = .horizontal
-        pokemonStackView.distribution = .equalCentering
-        pokemonStackView.alignment = .center
         cardView.addSubview(pokemonStackView)
+        view.addSubview(pokemonCardButton)
         
         NSLayoutConstraint.activate([
             cardView.topAnchor.constraint(equalTo: view.topAnchor, constant: 150),
