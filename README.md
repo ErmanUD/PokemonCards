@@ -8,7 +8,6 @@ Everytime user taps on the card, a new pokemon card is updated and flips over.
 Pokemon card shows the name, hp, attack and defense values and image of the pokemon.
 
 
-| Iphone 13     | Ipad Pro      |
-| ------------- |---------------|
-| ![iphone13](https://user-images.githubusercontent.com/105637949/188727383-45166b74-8f9f-4d25-9b18-997aa1064837.gif) | ![ipad](https://user-images.githubusercontent.com/105637949/188727376-14844750-c1fc-49eb-841e-3d9746c46cbe.gif) |
-
+| Iphone 11 Preview |
+| ------------- |
+| ![pokeGif](https://user-images.githubusercontent.com/105637949/196229315-4828c2e1-cf71-4f0c-882f-7da805d4942c.gif)|
